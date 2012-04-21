@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="lazylame">
+</Property><Property Name="Solution File" Value="C:\Users\Sean\Documents\Visual Studio 2010\Projects\lazylame\lazylame.sln">
+</Property><Property Name="Date" Value="Wednesday, August 04, 2010">
+</Property><Property Name="Time" Value="4:50 AM">
+</Property></Properties><Event ErrorLevel="0" Project="lazylame" Source="lazylame\lazylame.csproj" Description="Project converted successfully">
+</Event><Event ErrorLevel="3" Project="lazylame" Source="lazylame\lazylame.csproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="lazylame.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="lazylame.sln" Description="Converted">
+</Event><Event ErrorLevel="0" Project="lazylame" Source="lazylame\lazylame.csproj" Description="Scan complete: Upgrade not required for project files.">
+</Event></UpgradeLog>
