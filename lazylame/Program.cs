@@ -1,24 +1,24 @@
-﻿using System;
+﻿using Luminescence.Xiph;
+using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
-using Microsoft.Win32;
-using System.IO;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Luminescence.Xiph;
 using System.Windows.Forms;
 
 namespace lazylame
 {
-    class Program
+    internal class Program
     {
         static public string FLACPath = "";
         static public string LAMEPath = "";
-        
-        static void Main(string[] args)
+
+        private static void Main(string[] args)
         {
-            if  (args.Length < 1)
+            if (args.Length < 1)
             {
                 Console.WriteLine("No path supplied.");
 
@@ -39,7 +39,6 @@ namespace lazylame
 
                 return;
             }
-
 
             if (File.Exists(LAMEPath))
             {
@@ -85,232 +84,234 @@ namespace lazylame
             }
         }
 
-        static void ConvertSongsInFolder(string Path)
+        private static void ConvertSongsInFolder(string Path)
         {
-            if (Directory.Exists(Path))
+            if (!Directory.Exists(Path))
             {
-                DirectoryInfo DI = new DirectoryInfo(Path);
+                return;
+            }
 
-                List<FileInfo> Files = new List<FileInfo>();
+            DirectoryInfo DI = new DirectoryInfo(Path);
 
-                Files.AddRange(DI.GetFiles());
+            List<FileInfo> Files = new List<FileInfo>();
 
-                Files = Files.FindAll(delegate(FileInfo f) { return f.Extension.ToLower() == ".flac"; });
+            Files.AddRange(DI.GetFiles());
 
-                int Count = 0;
+            Files = Files.FindAll(delegate(FileInfo f) { return f.Extension.ToLower() == ".flac"; });
 
-                foreach (FileInfo File in Files)
+            int Count = 0;
+
+            foreach (FileInfo File in Files)
+            {
+                Count++;
+
+                Console.WriteLine(File.FullName);
+
+                FlacTagger Tags = new FlacTagger(File.FullName);
+
+                string Album = Tags.Album;
+
+                string Artist = Tags.Artist;
+
+                string Date = Tags.Date;
+
+                string Genre = Tags.Genre;
+
+                string Title = Tags.Title;
+
+                string TrackNumber = Tags.TrackNumber;
+
+                string TempName = Path;
+
+                if (TempName[TempName.Length - 1] != '\\')
                 {
-                    Count++;
+                    TempName += "\\";
+                }
 
-                    Console.WriteLine(File.FullName);
+                TempName += System.Guid.NewGuid().ToString("N") + ".wav";
 
-                    FlacTagger Tags = new FlacTagger(File.FullName);
+                System.Diagnostics.ProcessStartInfo FLACPSI = new System.Diagnostics.ProcessStartInfo(FLACPath, "-d " + "\"" + File.FullName + "\" --output-name=\"" + TempName + "\"");
 
-                    string Album = Tags.Album;
+                FLACPSI.UseShellExecute = false;
 
-                    string Artist = Tags.Artist;
+                FLACPSI.WorkingDirectory = Path;
 
-                    string Date = Tags.Date;
+                FLACPSI.ErrorDialog = false;
 
-                    string Genre = Tags.Genre;
+                FLACPSI.CreateNoWindow = true;
 
-                    string Title = Tags.Title;
+                FLACPSI.RedirectStandardOutput = true;
 
-                    string TrackNumber = Tags.TrackNumber;
+                try
+                {
+                    Process P = System.Diagnostics.Process.Start(FLACPSI);
 
-                    string TempName = Path;
+                    P.WaitForExit();
 
-                    if (TempName[TempName.Length - 1] != '\\')
+                    System.IO.StreamReader OutputReader = P.StandardOutput;
+
+                    string Output = OutputReader.ReadToEnd();
+
+                    OutputReader.Close();
+
+                    Console.WriteLine(Output);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                string LAMEArgs = "-V 0 --vbr-new --silent --add-id3v2 --ignore-tag-errors --tc \"LAME 3.99r V0\"";
+
+                if (Album != "" && Album != null)
+                {
+                    Console.WriteLine(Album);
+
+                    LAMEArgs += " --tl \"" + Album + "\"";
+                }
+
+                if (Artist != "" && Artist != null)
+                {
+                    Console.WriteLine(Artist);
+
+                    LAMEArgs += " --ta \"" + Artist + "\"";
+                }
+
+                if (Date != "" && Date != null)
+                {
+                    Console.WriteLine(Date);
+
+                    LAMEArgs += " --ty \"" + Date + "\"";
+                }
+
+                if (Genre != "" && Genre != null)
+                {
+                    Console.WriteLine(Genre);
+
+                    LAMEArgs += " --tg \"" + Genre + "\"";
+                }
+
+                if (Title != "" && Title != null)
+                {
+                    Console.WriteLine(Title);
+
+                    LAMEArgs += " --tt \"" + Title + "\"";
+                }
+
+                if (TrackNumber == "" || TrackNumber == null)
+                {
+                    TrackNumber = Count.ToString();
+                }
+
+                if (TrackNumber != "" && TrackNumber != null)
+                {
+                    if (TrackNumber.Length == 1)
                     {
-                        TempName += "\\";
+                        TrackNumber = "0" + TrackNumber;
                     }
 
-                    TempName += System.Guid.NewGuid().ToString("N") + ".wav";
+                    string NumberOfTracks = Files.Count.ToString();
 
-                    System.Diagnostics.ProcessStartInfo FLACPSI = new System.Diagnostics.ProcessStartInfo(FLACPath, "-d " + "\"" + File.FullName + "\" --output-name=\"" + TempName + "\"");
-
-                    FLACPSI.UseShellExecute = false;
-
-                    FLACPSI.WorkingDirectory = Path;
-
-                    FLACPSI.ErrorDialog = false;
-
-                    FLACPSI.CreateNoWindow = true;
-
-                    FLACPSI.RedirectStandardOutput = true;
-
-                    try
+                    if (NumberOfTracks.Length == 1)
                     {
-                        Process P = System.Diagnostics.Process.Start(FLACPSI);
-
-                        P.WaitForExit();
-
-                        System.IO.StreamReader OutputReader = P.StandardOutput;
-
-                        string Output = OutputReader.ReadToEnd();
-
-                        OutputReader.Close();
-
-                        Console.WriteLine(Output);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
+                        NumberOfTracks = "0" + NumberOfTracks;
                     }
 
-                    string LAMEArgs = "-V 0 --vbr-new --silent --add-id3v2 --ignore-tag-errors --tc \"LAME 3.98r V0\"";
+                    Console.WriteLine(TrackNumber);
 
-                    if (Album != "" && Album != null)
+                    LAMEArgs += " --tn \"" + TrackNumber + "/" + NumberOfTracks + "\"";
+                }
+
+                LAMEArgs += " \"" + TempName + "\"";
+
+                string DestinationName = Path;
+
+                if (DestinationName[DestinationName.Length - 1] != '\\')
+                {
+                    DestinationName += "\\";
+                }
+
+                if ((TrackNumber != "") && (Title != ""))
+                {
+                    DestinationName += TrackNumber + " " + Title + ".mp3";
+                }
+                else
+                {
+                    DestinationName += File.Name + ".mp3";
+                }
+
+                int FileNamePosition = DestinationName.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1;
+
+                System.Text.StringBuilder SB = new System.Text.StringBuilder();
+
+                SB.Append(DestinationName.Substring(0, FileNamePosition));
+
+                for (int i = FileNamePosition; i < DestinationName.Length; i++)
+                {
+                    char FileNameChar = DestinationName[i];
+
+                    if ((FileNameChar.Equals('~')) || (FileNameChar.Equals('〜')))
                     {
-                        Console.WriteLine(Album);
-
-                        LAMEArgs += " --tl \"" + Album + "\"";
-                    }
-
-                    if (Artist != "" && Artist != null)
-                    {
-                        Console.WriteLine(Artist);
-
-                        LAMEArgs += " --ta \"" + Artist + "\"";
-                    }
-
-                    if (Date != "" && Date != null)
-                    {
-                        Console.WriteLine(Date);
-
-                        LAMEArgs += " --ty \"" + Date + "\"";
-                    }
-
-                    if (Genre != "" && Genre != null)
-                    {
-                        Console.WriteLine(Genre);
-
-                        LAMEArgs += " --tg \"" + Genre + "\"";
-                    }
-
-                    if (Title != "" && Title != null)
-                    {
-                        Console.WriteLine(Title);
-
-                        LAMEArgs += " --tt \"" + Title + "\"";
-                    }
-
-                    if (TrackNumber == "" || TrackNumber == null)
-                    {
-                        TrackNumber = Count.ToString();
-                    }
-
-                    if (TrackNumber != "" && TrackNumber != null)
-                    {
-                        if (TrackNumber.Length == 1)
-                        {
-                            TrackNumber = "0" + TrackNumber;
-                        }
-
-                        string NumberOfTracks = Files.Count.ToString();
-
-                        if (NumberOfTracks.Length == 1)
-                        {
-                            NumberOfTracks = "0" + NumberOfTracks;
-                        }
-
-                        Console.WriteLine(TrackNumber);
-
-                        LAMEArgs += " --tn \"" + TrackNumber + "/" + NumberOfTracks + "\"";
-                    }
-
-                    LAMEArgs += " \"" + TempName + "\"";
-
-                    string DestinationName = Path;
-
-                    if (DestinationName[DestinationName.Length - 1] != '\\')
-                    {
-                        DestinationName += "\\";
-                    }
-
-                    if ((TrackNumber != "") && (Title != ""))
-                    {
-                        DestinationName += TrackNumber + " " + Title + ".mp3";
+                        FileNameChar = '_';
                     }
                     else
                     {
-                        DestinationName += File.Name + ".mp3";
-                    }
-
-                    int FileNamePosition = DestinationName.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1;
-
-                    System.Text.StringBuilder SB = new System.Text.StringBuilder();
-
-                    SB.Append(DestinationName.Substring(0, FileNamePosition));
-
-                    for (int i = FileNamePosition; i < DestinationName.Length; i++)
-                    {
-                        char FileNameChar = DestinationName[i];
-
-                        if ((FileNameChar.Equals('~')) || (FileNameChar.Equals('〜')))
+                        foreach (char c in System.IO.Path.GetInvalidFileNameChars())
                         {
-                            FileNameChar = '_';
-                        }
-                        else
-                        {
-                            foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+                            if (FileNameChar.Equals(c))
                             {
-                                if (FileNameChar.Equals(c))
-                                {
-                                    FileNameChar = '_';
+                                FileNameChar = '_';
 
-                                    break;
-                                }
+                                break;
                             }
                         }
-
-                        SB.Append(FileNameChar);
                     }
 
-                    DestinationName = SB.ToString();
+                    SB.Append(FileNameChar);
+                }
 
-                    LAMEArgs += " \"" + DestinationName + "\"";
+                DestinationName = SB.ToString();
 
-                    System.Diagnostics.ProcessStartInfo LAMEPSI = new System.Diagnostics.ProcessStartInfo(LAMEPath, LAMEArgs);
+                LAMEArgs += " \"" + DestinationName + "\"";
 
-                    LAMEPSI.UseShellExecute = false;
+                System.Diagnostics.ProcessStartInfo LAMEPSI = new System.Diagnostics.ProcessStartInfo(LAMEPath, LAMEArgs);
 
-                    LAMEPSI.WorkingDirectory = Path;
+                LAMEPSI.UseShellExecute = false;
 
-                    LAMEPSI.ErrorDialog = false;
+                LAMEPSI.WorkingDirectory = Path;
 
-                    LAMEPSI.CreateNoWindow = true;
+                LAMEPSI.ErrorDialog = false;
 
-                    LAMEPSI.RedirectStandardOutput = true;
+                LAMEPSI.CreateNoWindow = true;
 
-                    try
-                    {
-                        Process P = System.Diagnostics.Process.Start(LAMEPSI);
+                LAMEPSI.RedirectStandardOutput = true;
 
-                        P.WaitForExit();
+                try
+                {
+                    Process P = System.Diagnostics.Process.Start(LAMEPSI);
 
-                        System.IO.StreamReader OutputReader = P.StandardOutput;
+                    P.WaitForExit();
 
-                        string Output = OutputReader.ReadToEnd();
+                    System.IO.StreamReader OutputReader = P.StandardOutput;
 
-                        OutputReader.Close();
+                    string Output = OutputReader.ReadToEnd();
 
-                        Console.WriteLine(Output);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                    OutputReader.Close();
 
-                    try
-                    {
-                        System.IO.File.Delete(TempName);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
+                    Console.WriteLine(Output);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                try
+                {
+                    System.IO.File.Delete(TempName);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
                 }
             }
         }
