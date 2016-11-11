@@ -13,10 +13,10 @@ namespace lazylame
 {
     internal class Program
     {
-        static public string FLACPath = "";
-        static public string LAMEPath = "";
+        static public String FLACPath = "";
+        static public String LAMEPath = "";
 
-        private static void Main(string[] args)
+        private static void Main(String[] args)
         {
             if (args.Length < 1)
             {
@@ -53,7 +53,7 @@ namespace lazylame
 
             if (args[0] == "-a" || args[0] == "-A")
             {
-                string WorkingDirectory = "";
+                String WorkingDirectory = "";
 
                 if (args.Length == 1)
                 {
@@ -68,23 +68,23 @@ namespace lazylame
                     }
                 }
 
-                string[] Folders = System.IO.Directory.GetDirectories(WorkingDirectory, "*", System.IO.SearchOption.AllDirectories);
+                String[] Folders = System.IO.Directory.GetDirectories(WorkingDirectory, "*", System.IO.SearchOption.AllDirectories);
 
-                foreach (string Folder in Folders)
+                foreach (String Folder in Folders)
                 {
                     ConvertSongsInFolder(Folder);
                 }
             }
             else
             {
-                foreach (string Path in args)
+                foreach (String Path in args)
                 {
                     ConvertSongsInFolder(Path);
                 }
             }
         }
 
-        private static void ConvertSongsInFolder(string Path)
+        private static void ConvertSongsInFolder(String Path)
         {
             if (!Directory.Exists(Path))
             {
@@ -99,7 +99,7 @@ namespace lazylame
 
             Files = Files.FindAll(delegate(FileInfo f) { return f.Extension.ToLower() == ".flac"; });
 
-            int Count = 0;
+            Int32 Count = 0;
 
             foreach (FileInfo File in Files)
             {
@@ -109,19 +109,19 @@ namespace lazylame
 
                 FlacTagger Tags = new FlacTagger(File.FullName);
 
-                string Album = Tags.Album;
+                String Album = Tags.Album;
 
-                string Artist = Tags.Artist;
+                String Artist = Tags.Artist;
 
-                string Date = Tags.Date;
+                String Date = Tags.Date;
 
-                string Genre = Tags.Genre;
+                String Genre = Tags.Genre;
 
-                string Title = Tags.Title;
+                String Title = Tags.Title;
 
-                string TrackNumber = Tags.TrackNumber;
+                String TrackNumber = Tags.TrackNumber;
 
-                string TempName = Path;
+                String TempName = Path;
 
                 if (TempName[TempName.Length - 1] != '\\')
                 {
@@ -150,7 +150,7 @@ namespace lazylame
 
                     System.IO.StreamReader OutputReader = P.StandardOutput;
 
-                    string Output = OutputReader.ReadToEnd();
+                    String Output = OutputReader.ReadToEnd();
 
                     OutputReader.Close();
 
@@ -161,7 +161,7 @@ namespace lazylame
                     Console.WriteLine(ex.Message);
                 }
 
-                string LAMEArgs = "-V 0 --vbr-new --silent --add-id3v2 --ignore-tag-errors --tc \"LAME 3.99r V0\"";
+                String LAMEArgs = "-V 0 --vbr-new --silent --add-id3v2 --ignore-tag-errors --tc \"LAME 3.99r V0\"";
 
                 if (Album != "" && Album != null)
                 {
@@ -210,7 +210,7 @@ namespace lazylame
                         TrackNumber = "0" + TrackNumber;
                     }
 
-                    string NumberOfTracks = Files.Count.ToString();
+                    String NumberOfTracks = Files.Count.ToString();
 
                     if (NumberOfTracks.Length == 1)
                     {
@@ -224,7 +224,7 @@ namespace lazylame
 
                 LAMEArgs += " \"" + TempName + "\"";
 
-                string DestinationName = Path;
+                String DestinationName = Path;
 
                 if (DestinationName[DestinationName.Length - 1] != '\\')
                 {
@@ -240,15 +240,15 @@ namespace lazylame
                     DestinationName += File.Name + ".mp3";
                 }
 
-                int FileNamePosition = DestinationName.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1;
+                Int32 FileNamePosition = DestinationName.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1;
 
                 System.Text.StringBuilder SB = new System.Text.StringBuilder();
 
                 SB.Append(DestinationName.Substring(0, FileNamePosition));
 
-                for (int i = FileNamePosition; i < DestinationName.Length; i++)
+                for (Int32 i = FileNamePosition; i < DestinationName.Length; i++)
                 {
-                    char FileNameChar = DestinationName[i];
+                    Char FileNameChar = DestinationName[i];
 
                     if ((FileNameChar.Equals('~')) || (FileNameChar.Equals('〜')))
                     {
@@ -256,7 +256,7 @@ namespace lazylame
                     }
                     else
                     {
-                        foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+                        foreach (Char c in System.IO.Path.GetInvalidFileNameChars())
                         {
                             if (FileNameChar.Equals(c))
                             {
@@ -294,7 +294,7 @@ namespace lazylame
 
                     System.IO.StreamReader OutputReader = P.StandardOutput;
 
-                    string Output = OutputReader.ReadToEnd();
+                    String Output = OutputReader.ReadToEnd();
 
                     OutputReader.Close();
 
