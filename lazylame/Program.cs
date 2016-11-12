@@ -1,22 +1,18 @@
 ﻿using Luminescence.Xiph;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
-namespace lazylame
+namespace LazyLame
 {
     internal class Program
     {
-        static public String FLACPath = "";
-        static public String LAMEPath = "";
+        private static string flacPath = "";
+        private static string lamePath = "";
 
-        private static void Main(String[] args)
+        private static void Main(string[] args)
         {
             if (args.Length < 1)
             {
@@ -25,11 +21,11 @@ namespace lazylame
                 return;
             }
 
-            FLACPath = Application.StartupPath + "\\flac.exe";
+            flacPath = Application.StartupPath + "\\flac.exe";
 
-            LAMEPath = Application.StartupPath + "\\lame.exe";
+            lamePath = Application.StartupPath + "\\lame.exe";
 
-            if (File.Exists(FLACPath))
+            if (File.Exists(flacPath))
             {
                 Console.WriteLine("FLAC found...");
             }
@@ -40,7 +36,7 @@ namespace lazylame
                 return;
             }
 
-            if (File.Exists(LAMEPath))
+            if (File.Exists(lamePath))
             {
                 Console.WriteLine("LAME found...");
             }
@@ -51,254 +47,254 @@ namespace lazylame
                 return;
             }
 
-            if (args[0] == "-a" || args[0] == "-A")
+            if (args[0].ToLower() == "-a")
             {
-                String WorkingDirectory = "";
+                string workingDirectory = "";
 
                 if (args.Length == 1)
                 {
-                    WorkingDirectory = Path.GetDirectoryName(Application.ExecutablePath);
+                    workingDirectory = Path.GetDirectoryName(Application.ExecutablePath);
                 }
                 else
                 {
-                    //may wanna change this to make it an unlimited list of folders to search through
+                    // May wanna change this to make it an unlimited list of folders to search through.
                     if (args.Length == 2)
                     {
-                        WorkingDirectory = args[1];
+                        workingDirectory = args[1];
                     }
                 }
 
-                String[] Folders = System.IO.Directory.GetDirectories(WorkingDirectory, "*", System.IO.SearchOption.AllDirectories);
+                string[] folders = System.IO.Directory.GetDirectories(workingDirectory, "*", System.IO.SearchOption.AllDirectories);
 
-                foreach (String Folder in Folders)
+                foreach (string folder in folders)
                 {
-                    ConvertSongsInFolder(Folder);
+                    ConvertSongsInFolder(folder);
                 }
             }
             else
             {
-                foreach (String Path in args)
+                foreach (string path in args)
                 {
-                    ConvertSongsInFolder(Path);
+                    ConvertSongsInFolder(path);
                 }
             }
         }
 
-        private static void ConvertSongsInFolder(String Path)
+        private static void ConvertSongsInFolder(string path)
         {
-            if (!Directory.Exists(Path))
+            if (!Directory.Exists(path))
             {
                 return;
             }
 
-            DirectoryInfo DI = new DirectoryInfo(Path);
+            DirectoryInfo directoryInfo = new DirectoryInfo(path);
 
-            List<FileInfo> Files = new List<FileInfo>();
+            List<FileInfo> files = new List<FileInfo>();
 
-            Files.AddRange(DI.GetFiles());
+            files.AddRange(directoryInfo.GetFiles());
 
-            Files = Files.FindAll(delegate(FileInfo f) { return f.Extension.ToLower() == ".flac"; });
+            files = files.FindAll(delegate(FileInfo f) { return f.Extension.ToLower() == ".flac"; });
 
-            Int32 Count = 0;
+            int count = 0;
 
-            foreach (FileInfo File in Files)
+            foreach (FileInfo file in files)
             {
-                Count++;
+                count++;
 
-                Console.WriteLine(File.FullName);
+                Console.WriteLine(file.FullName);
 
-                FlacTagger Tags = new FlacTagger(File.FullName);
+                FlacTagger tags = new FlacTagger(file.FullName);
 
-                String Album = Tags.Album;
+                string album = tags.Album;
 
-                String Artist = Tags.Artist;
+                string artist = tags.Artist;
 
-                String Date = Tags.Date;
+                string date = tags.Date;
 
-                String Genre = Tags.Genre;
+                string genre = tags.Genre;
 
-                String Title = Tags.Title;
+                string title = tags.Title;
 
-                String TrackNumber = Tags.TrackNumber;
+                string trackNumber = tags.TrackNumber;
 
-                String TempName = Path;
+                string tempName = path;
 
-                if (TempName[TempName.Length - 1] != '\\')
+                if (tempName[tempName.Length - 1] != '\\')
                 {
-                    TempName += "\\";
+                    tempName += "\\";
                 }
 
-                TempName += System.Guid.NewGuid().ToString("N") + ".wav";
+                tempName += System.Guid.NewGuid().ToString("N") + ".wav";
 
-                System.Diagnostics.ProcessStartInfo FLACPSI = new System.Diagnostics.ProcessStartInfo(FLACPath, "-d " + "\"" + File.FullName + "\" --output-name=\"" + TempName + "\"");
+                System.Diagnostics.ProcessStartInfo flacProcessStartInfo = new System.Diagnostics.ProcessStartInfo(flacPath, "-d " + "\"" + file.FullName + "\" --output-name=\"" + tempName + "\"");
 
-                FLACPSI.UseShellExecute = false;
+                flacProcessStartInfo.UseShellExecute = false;
 
-                FLACPSI.WorkingDirectory = Path;
+                flacProcessStartInfo.WorkingDirectory = path;
 
-                FLACPSI.ErrorDialog = false;
+                flacProcessStartInfo.ErrorDialog = false;
 
-                FLACPSI.CreateNoWindow = true;
+                flacProcessStartInfo.CreateNoWindow = true;
 
-                FLACPSI.RedirectStandardOutput = true;
+                flacProcessStartInfo.RedirectStandardOutput = true;
 
                 try
                 {
-                    Process P = System.Diagnostics.Process.Start(FLACPSI);
+                    Process flacProcess = System.Diagnostics.Process.Start(flacProcessStartInfo);
 
-                    P.WaitForExit();
+                    flacProcess.WaitForExit();
 
-                    System.IO.StreamReader OutputReader = P.StandardOutput;
+                    System.IO.StreamReader flacOutputReader = flacProcess.StandardOutput;
 
-                    String Output = OutputReader.ReadToEnd();
+                    string flacOutput = flacOutputReader.ReadToEnd();
 
-                    OutputReader.Close();
+                    flacOutputReader.Close();
 
-                    Console.WriteLine(Output);
+                    Console.WriteLine(flacOutput);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                 }
 
-                String LAMEArgs = "-V 0 --vbr-new --silent --add-id3v2 --ignore-tag-errors --tc \"LAME 3.99r V0\"";
+                string lameArgs = "-V 0 --vbr-new --silent --add-id3v2 --ignore-tag-errors --tc \"LAME 3.99r V0\"";
 
-                if (Album != "" && Album != null)
+                if (album != "" && album != null)
                 {
-                    Console.WriteLine(Album);
+                    Console.WriteLine(album);
 
-                    LAMEArgs += " --tl \"" + Album + "\"";
+                    lameArgs += " --tl \"" + album + "\"";
                 }
 
-                if (Artist != "" && Artist != null)
+                if (artist != "" && artist != null)
                 {
-                    Console.WriteLine(Artist);
+                    Console.WriteLine(artist);
 
-                    LAMEArgs += " --ta \"" + Artist + "\"";
+                    lameArgs += " --ta \"" + artist + "\"";
                 }
 
-                if (Date != "" && Date != null)
+                if (date != "" && date != null)
                 {
-                    Console.WriteLine(Date);
+                    Console.WriteLine(date);
 
-                    LAMEArgs += " --ty \"" + Date + "\"";
+                    lameArgs += " --ty \"" + date + "\"";
                 }
 
-                if (Genre != "" && Genre != null)
+                if (genre != "" && genre != null)
                 {
-                    Console.WriteLine(Genre);
+                    Console.WriteLine(genre);
 
-                    LAMEArgs += " --tg \"" + Genre + "\"";
+                    lameArgs += " --tg \"" + genre + "\"";
                 }
 
-                if (Title != "" && Title != null)
+                if (title != "" && title != null)
                 {
-                    Console.WriteLine(Title);
+                    Console.WriteLine(title);
 
-                    LAMEArgs += " --tt \"" + Title + "\"";
+                    lameArgs += " --tt \"" + title + "\"";
                 }
 
-                if (TrackNumber == "" || TrackNumber == null)
+                if (trackNumber == "" || trackNumber == null)
                 {
-                    TrackNumber = Count.ToString();
+                    trackNumber = count.ToString();
                 }
 
-                if (TrackNumber != "" && TrackNumber != null)
+                if (trackNumber != "" && trackNumber != null)
                 {
-                    if (TrackNumber.Length == 1)
+                    if (trackNumber.Length == 1)
                     {
-                        TrackNumber = "0" + TrackNumber;
+                        trackNumber = "0" + trackNumber;
                     }
 
-                    String NumberOfTracks = Files.Count.ToString();
+                    string numberOfTracks = files.Count.ToString();
 
-                    if (NumberOfTracks.Length == 1)
+                    if (numberOfTracks.Length == 1)
                     {
-                        NumberOfTracks = "0" + NumberOfTracks;
+                        numberOfTracks = "0" + numberOfTracks;
                     }
 
-                    Console.WriteLine(TrackNumber);
+                    Console.WriteLine(trackNumber);
 
-                    LAMEArgs += " --tn \"" + TrackNumber + "/" + NumberOfTracks + "\"";
+                    lameArgs += " --tn \"" + trackNumber + "/" + numberOfTracks + "\"";
                 }
 
-                LAMEArgs += " \"" + TempName + "\"";
+                lameArgs += " \"" + tempName + "\"";
 
-                String DestinationName = Path;
+                string destinationName = path;
 
-                if (DestinationName[DestinationName.Length - 1] != '\\')
+                if (destinationName[destinationName.Length - 1] != '\\')
                 {
-                    DestinationName += "\\";
+                    destinationName += "\\";
                 }
 
-                if ((TrackNumber != "") && (Title != ""))
+                if ((trackNumber != "") && (title != ""))
                 {
-                    DestinationName += TrackNumber + " " + Title + ".mp3";
+                    destinationName += trackNumber + " " + title + ".mp3";
                 }
                 else
                 {
-                    DestinationName += File.Name + ".mp3";
+                    destinationName += file.Name + ".mp3";
                 }
 
-                Int32 FileNamePosition = DestinationName.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1;
+                int fileNamePosition = destinationName.LastIndexOf(System.IO.Path.DirectorySeparatorChar) + 1;
 
-                System.Text.StringBuilder SB = new System.Text.StringBuilder();
+                System.Text.StringBuilder destinationNameBuilder = new System.Text.StringBuilder();
 
-                SB.Append(DestinationName.Substring(0, FileNamePosition));
+                destinationNameBuilder.Append(destinationName.Substring(0, fileNamePosition));
 
-                for (Int32 i = FileNamePosition; i < DestinationName.Length; i++)
+                for (int i = fileNamePosition; i < destinationName.Length; i++)
                 {
-                    Char FileNameChar = DestinationName[i];
+                    char fileNameChar = destinationName[i];
 
-                    if ((FileNameChar.Equals('~')) || (FileNameChar.Equals('〜')))
+                    if (fileNameChar.Equals('~') || fileNameChar.Equals('〜'))
                     {
-                        FileNameChar = '_';
+                        fileNameChar = '_';
                     }
                     else
                     {
-                        foreach (Char c in System.IO.Path.GetInvalidFileNameChars())
+                        foreach (char c in System.IO.Path.GetInvalidFileNameChars())
                         {
-                            if (FileNameChar.Equals(c))
+                            if (fileNameChar.Equals(c))
                             {
-                                FileNameChar = '_';
+                                fileNameChar = '_';
 
                                 break;
                             }
                         }
                     }
 
-                    SB.Append(FileNameChar);
+                    destinationNameBuilder.Append(fileNameChar);
                 }
 
-                DestinationName = SB.ToString();
+                destinationName = destinationNameBuilder.ToString();
 
-                LAMEArgs += " \"" + DestinationName + "\"";
+                lameArgs += " \"" + destinationName + "\"";
 
-                System.Diagnostics.ProcessStartInfo LAMEPSI = new System.Diagnostics.ProcessStartInfo(LAMEPath, LAMEArgs);
+                System.Diagnostics.ProcessStartInfo lameProcessStartInfo = new System.Diagnostics.ProcessStartInfo(lamePath, lameArgs);
 
-                LAMEPSI.UseShellExecute = false;
+                lameProcessStartInfo.UseShellExecute = false;
 
-                LAMEPSI.WorkingDirectory = Path;
+                lameProcessStartInfo.WorkingDirectory = path;
 
-                LAMEPSI.ErrorDialog = false;
+                lameProcessStartInfo.ErrorDialog = false;
 
-                LAMEPSI.CreateNoWindow = true;
+                lameProcessStartInfo.CreateNoWindow = true;
 
-                LAMEPSI.RedirectStandardOutput = true;
+                lameProcessStartInfo.RedirectStandardOutput = true;
 
                 try
                 {
-                    Process P = System.Diagnostics.Process.Start(LAMEPSI);
+                    Process lameProcess = System.Diagnostics.Process.Start(lameProcessStartInfo);
 
-                    P.WaitForExit();
+                    lameProcess.WaitForExit();
 
-                    System.IO.StreamReader OutputReader = P.StandardOutput;
+                    System.IO.StreamReader lameOutputReader = lameProcess.StandardOutput;
 
-                    String Output = OutputReader.ReadToEnd();
+                    string lameOutput = lameOutputReader.ReadToEnd();
 
-                    OutputReader.Close();
+                    lameOutputReader.Close();
 
-                    Console.WriteLine(Output);
+                    Console.WriteLine(lameOutput);
                 }
                 catch (Exception ex)
                 {
@@ -307,7 +303,7 @@ namespace lazylame
 
                 try
                 {
-                    System.IO.File.Delete(TempName);
+                    System.IO.File.Delete(tempName);
                 }
                 catch (Exception ex)
                 {
