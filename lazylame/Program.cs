@@ -117,16 +117,24 @@ namespace LazyLame
 
                 string trackNumber = tags.TrackNumber;
 
-                string tempName = path;
+                string wavTempName = path;
 
-                if (tempName[tempName.Length - 1] != '\\')
+                if (wavTempName[wavTempName.Length - 1] != '\\')
                 {
-                    tempName += "\\";
+                    wavTempName += "\\";
                 }
 
-                tempName += System.Guid.NewGuid().ToString("N") + ".wav";
+                wavTempName += System.Guid.NewGuid().ToString("N");
 
-                System.Diagnostics.ProcessStartInfo flacProcessStartInfo = new System.Diagnostics.ProcessStartInfo(flacPath, "-d " + "\"" + file.FullName + "\" --output-name=\"" + tempName + "\"");
+                string flacTempName = wavTempName;
+
+                wavTempName += ".wav";
+
+                flacTempName += ".flac";
+
+                System.IO.File.Copy(file.FullName, flacTempName);
+
+                System.Diagnostics.ProcessStartInfo flacProcessStartInfo = new System.Diagnostics.ProcessStartInfo(flacPath, "--silent -d " + "\"" + flacTempName + "\" --output-name=\"" + wavTempName + "\"");
 
                 flacProcessStartInfo.UseShellExecute = false;
 
@@ -138,19 +146,38 @@ namespace LazyLame
 
                 flacProcessStartInfo.RedirectStandardOutput = true;
 
+                flacProcessStartInfo.RedirectStandardError = true;
+
                 try
                 {
                     Process flacProcess = System.Diagnostics.Process.Start(flacProcessStartInfo);
 
                     flacProcess.WaitForExit();
 
-                    System.IO.StreamReader flacOutputReader = flacProcess.StandardOutput;
+                    System.IO.StreamReader flacStdoutReader = flacProcess.StandardOutput;
 
-                    string flacOutput = flacOutputReader.ReadToEnd();
+                    string flacStdout = flacStdoutReader.ReadToEnd();
 
-                    flacOutputReader.Close();
+                    flacStdoutReader.Close();
 
-                    Console.WriteLine(flacOutput);
+                    Console.WriteLine(flacStdout);
+
+                    System.IO.StreamReader flacStderrReader = flacProcess.StandardError;
+
+                    string flacStderr = flacStderrReader.ReadToEnd();
+
+                    flacStderrReader.Close();
+
+                    Console.WriteLine(flacStderr);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+                try
+                {
+                    System.IO.File.Delete(flacTempName);
                 }
                 catch (Exception ex)
                 {
@@ -218,7 +245,7 @@ namespace LazyLame
                     lameArgs += " --tn \"" + trackNumber + "/" + numberOfTracks + "\"";
                 }
 
-                lameArgs += " \"" + tempName + "\"";
+                lameArgs += " \"" + wavTempName + "\"";
 
                 string destinationName = path;
 
@@ -303,7 +330,7 @@ namespace LazyLame
 
                 try
                 {
-                    System.IO.File.Delete(tempName);
+                    System.IO.File.Delete(wavTempName);
                 }
                 catch (Exception ex)
                 {
